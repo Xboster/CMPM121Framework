@@ -1,32 +1,42 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class MenuSelectorController : MonoBehaviour
 {
-    public TextMeshProUGUI label;
-    public string level;
     public EnemySpawner spawner;
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private string levelName;
+
+    public void SetLevel(string name)
     {
-        
+        levelName = name;
+
+        // Set the button text
+        TextMeshProUGUI label = GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null) label.text = name;
+        if (label != null)
+        {
+            label.text = name;
+        } else
+        {
+            Debug.LogWarning("No Text component found on this button prefab!");
+        }
+
+        // Add click listener
+        Button button = GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(HandleClick);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    // ✅ This MUST exist for the button to work
+    private void HandleClick()
     {
-        
-    }
-
-    public void SetLevel(string text)
-    {
-        level = text;
-        label.text = text;
-    }
-
-    public void StartLevel()
-    {
-        spawner.StartLevel(level);
+        if (spawner != null)
+        {
+            spawner.StartLevel(levelName);
+        }
     }
 }
