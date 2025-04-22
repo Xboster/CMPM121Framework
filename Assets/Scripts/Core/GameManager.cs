@@ -26,6 +26,8 @@ public class GameManager
     }
 
     public GameObject player;
+
+    public int wave;
     
     public ProjectileManager projectileManager;
     public SpellIconManager spellIconManager;
