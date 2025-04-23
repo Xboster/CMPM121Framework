@@ -14,7 +14,7 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemy;
     public SpawnPoint[] SpawnPoints;
 
-
+    
 
     private List<EnemyData> enemyTypes;
     private List<LevelData> levels;
