@@ -5,11 +5,11 @@ using System;
 public class RewardScreenManager : MonoBehaviour
 {
     [SerializeField]
-    TextMeshProUGUI tmp1;
+    TextMeshProUGUI timeSpent;
     [SerializeField]
-    TextMeshProUGUI tmp2;
+    TextMeshProUGUI damageDealt;
     [SerializeField]
-    TextMeshProUGUI tmp3;
+    TextMeshProUGUI damageRecieved;
 
     public GameObject rewardUI;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -25,15 +25,14 @@ public class RewardScreenManager : MonoBehaviour
         {
             rewardUI.SetActive(true);
 
-            tmp1.text = "Time Spent: " + Math.Round(GameManager.Instance.timeEnd - GameManager.Instance.timeStart, 2);
-            tmp2.text = "Damage Recieved: " + GameManager.Instance.damageReceived;
-            tmp3.text = "Damage Dealt: " + GameManager.Instance.damageDealt;
+            timeSpent.text = "Time Spent: " + Math.Round(GameManager.Instance.timeEnd - GameManager.Instance.timeStart, 2);
+            damageDealt.text = "Damage Dealt: " + GameManager.Instance.damageDealt;
+            damageRecieved.text = "Damage Recieved: " + GameManager.Instance.damageReceived;
         
         }
         else
         {
             rewardUI.SetActive(false);
-            // tmp1.SetActive(false);
         }
     }
 }

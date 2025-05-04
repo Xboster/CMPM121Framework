@@ -7,14 +7,14 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
+using System;
 
 public class EnemySpawner : MonoBehaviour
 {
     public Image level_selector;
     public GameObject button;
     public GameObject enemy;
-    public SpawnPoint[] SpawnPoints;    
-    public string difficulty_level;
+    public SpawnPoint[] SpawnPoints;
     public int wave;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -38,7 +38,7 @@ public class EnemySpawner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void StartLevel(string levelname)
@@ -47,89 +47,24 @@ public class EnemySpawner : MonoBehaviour
         // this is not nice: we should not have to be required to tell the player directly that the level is starting
         GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
         StartCoroutine(SpawnWave());
-        difficulty_level = levelname;
-        wave = 1;
+        GameManager.Instance.difficulty = levelname;
+        GameManager.Instance.wave = 1;
     }
 
     public void NextWave()
     {
         StartCoroutine(SpawnWave());
-        wave++;
+        GameManager.Instance.wave++;
     }
 
-    public static int evaluateRPN(string expression)
-    {
-        Stack<int> stack = new Stack<int>();
-
-        if (string.IsNullOrWhiteSpace(expression))
-        {
-            Debug.LogWarning("Expression is empty or null.");
-            return int.MinValue;
-        }
-
-        string[] tokens = expression.Split(' ');
-
-        foreach (string token in tokens)
-        {
-            if (int.TryParse(token, out int number))
-            {
-                stack.Push(number);
-            }
-            else
-            {
-                if (stack.Count < 2)
-                {
-                    Debug.LogWarning("Invalid RPN expression: Not enough operands.");
-                    return int.MinValue;
-                }
-
-                int b = stack.Pop();
-                int a = stack.Pop();
-
-                switch (token)
-                {
-                    case "+": stack.Push(a + b); break;
-                    case "-": stack.Push(a - b); break;
-                    case "*": stack.Push(a * b); break;
-                    case "/":
-                        if (b == 0)
-                        {
-                            Debug.LogWarning("Division by zero.");
-                            return int.MinValue;
-                        }
-                        stack.Push(a / b);
-                        break;
-                    case "%":
-                        if (b == 0)
-                        {
-                            Debug.LogWarning("Modulo by zero.");
-                            return int.MinValue;
-                        }
-                        stack.Push(a % b);
-                        break;
-                    default:
-                        Debug.LogWarning($"Unknown operator: {token}");
-                        return int.MinValue;
-                }
-            }
-        }
-
-        if (stack.Count == 1)
-            return stack.Pop();
-
-        Debug.LogWarning("Invalid RPN expression: leftover operands.");
-        return int.MinValue;
-    }
     IEnumerator SpawnWave()
     {
         GameManager.Instance.state = GameManager.GameState.COUNTDOWN;
-        
         GameManager.Instance.countdown = 3;
 
         //scaling player stats
         PlayerController player = GameManager.Instance.player.GetComponent<PlayerController>();
-        UpdatePlayerStats(wave, player);
-
+        UpdatePlayerStats(player);
 
         for (int i = 3; i > 0; i--)
         {
@@ -139,28 +74,44 @@ public class EnemySpawner : MonoBehaviour
         GameManager.Instance.state = GameManager.GameState.INWAVE;
         GameManager.Instance.timeStart = Time.time;
 
-        var stage = GameManager.Instance.level_types[difficulty_level];
+        var stage = GameManager.Instance.level_types[GameManager.Instance.difficulty];
 
-        foreach(var spawn in stage.spawns){
-            
-            var count = evaluateRPN(spawn.count.Replace("wave", wave.ToString()));
-            Debug.Log("Wave total " + spawn.enemy + " spawn: " + count);
+        foreach (var spawn in stage.spawns)
+        {
+            Enemy baseEnemy = GameManager.Instance.enemy_types[spawn.enemy];
+            if (baseEnemy == null)
+            {
+                Debug.LogWarning($"Enemy type {spawn.enemy} not found!");
+                continue;
+            }
 
-            int seq = 0;
+            var vars = new Dictionary<string, float> {
+                { "base", baseEnemy.hp },
+                { "wave", GameManager.Instance.wave }
+            };
 
-            for(int i = 0; i < count; i++){
-                if(spawn.sequence != null){
-                    Debug.Log(spawn.enemy + " spawn amount:" + spawn.sequence[seq % spawn.sequence.Length]);
-                    for(int j = 0; j < spawn.sequence[seq % spawn.sequence.Length]-1; j++){
-                        yield return SpawnEnemy(spawn, false);
-                        i++;
-                        if(i >= count){
-                            break;
-                        }
-                    }
-                    seq++;
+            int totalEnemiesRemaining = (int)RPNEvaluator.Evaluate(spawn.count, vars);
+            int delay = spawn.delay != null ? (Int32.Parse(spawn.delay) > 0 ? Int32.Parse(spawn.delay) : 2) : 2;
+            int seqIndex = 0;
+
+            Enemy resultEnemy = baseEnemy;
+            resultEnemy.hp = spawn.hp != null ? (int)RPNEvaluator.Evaluate(spawn.hp, vars) : baseEnemy.hp;
+            resultEnemy.speed = spawn.speed != null ? (int)RPNEvaluator.Evaluate(spawn.speed, vars) : baseEnemy.speed;
+            resultEnemy.damage = spawn.damage != null ? (int)RPNEvaluator.Evaluate(spawn.damage, vars) : baseEnemy.damage;
+
+            while (totalEnemiesRemaining > 0)
+            {
+                int batchCount = spawn.sequence != null ? Mathf.Min(spawn.sequence[seqIndex % spawn.sequence.Length], totalEnemiesRemaining) : 1;
+                seqIndex++;
+
+                for (int i = 0; i < batchCount; i++)
+                {
+                    SpawnEnemy(resultEnemy, spawn.location);
                 }
-                yield return SpawnEnemy(spawn);
+
+                totalEnemiesRemaining -= batchCount;
+
+                yield return new WaitForSeconds(delay);
             }
         }
 
@@ -169,57 +120,60 @@ public class EnemySpawner : MonoBehaviour
         GameManager.Instance.timeEnd = Time.time;
     }
 
-    IEnumerator SpawnEnemy(Spawn spawn, bool delay = true)
+    void SpawnEnemy(Enemy e, string location = "random")
     {
-        // int delay = int.TryParse(spawn.delay, delay);
-        int hp = evaluateRPN(spawn.hp.Replace("wave", wave.ToString()).Replace("base", GameManager.Instance.enemy_types[spawn.enemy].hp.ToString()));
+        List<SpawnPoint> filteredSpawnPoints;
+        SpawnPoint spawnPoint;
+        if (location.StartsWith("random"))
+        {
+            string[] parts = location.Split(' ');
+            string type = parts.Length > 1 ? parts[1] : null;
 
-        SpawnPoint spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)];
-        if(spawn.location == "random"){
-            spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)];
+            if (string.IsNullOrEmpty(type))
+            {
+                filteredSpawnPoints = SpawnPoints.ToList();
+            }
+            else
+            {
+                filteredSpawnPoints = SpawnPoints.Where(p => p.kind.ToString().ToLower() == type.ToLower()).ToList();
+            }
+
+            if (filteredSpawnPoints.Count == 0)
+            {
+                spawnPoint = SpawnPoints[UnityEngine.Random.Range(0, SpawnPoints.Length)];
+            }
+            else
+            {
+                spawnPoint = filteredSpawnPoints[UnityEngine.Random.Range(0, filteredSpawnPoints.Count)];
+            }
         }
-        else if (spawn.location == "random red"){
-            spawn_point = SpawnPoints[Random.Range(4, SpawnPoints.Length)];
-        }
-        else if (spawn.location == "random bone"){
-            spawn_point = SpawnPoints[3];
+        else
+        {
+            spawnPoint = SpawnPoints[UnityEngine.Random.Range(0, SpawnPoints.Length)];
         }
 
-        Vector2 offset = Random.insideUnitCircle * 1.8f;
-                
-        Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
+
+        Vector2 offset = UnityEngine.Random.insideUnitCircle * 1.8f;
+
+        Vector3 initial_position = spawnPoint.transform.position + new Vector3(offset.x, offset.y, 0);
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
 
-        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(GameManager.Instance.enemy_types[spawn.enemy].sprite);
+        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(e.sprite);
         EnemyController en = new_enemy.GetComponent<EnemyController>();
 
-        en.hp = new Hittable(hp, Hittable.Team.MONSTERS, new_enemy);
+        en.hp = new Hittable(e.hp, Hittable.Team.MONSTERS, new_enemy);
 
-        en.speed = GameManager.Instance.enemy_types[spawn.enemy].speed;
-        en.damage = GameManager.Instance.enemy_types[spawn.enemy].damage;
+        en.speed = e.speed;
+        en.damage = e.damage;
 
         GameManager.Instance.AddEnemy(new_enemy);
-        
-
-        if(delay){
-            if(spawn.delay != null){   
-                yield return new WaitForSeconds(int.Parse(spawn.delay));
-            }
-            else {
-                yield return new WaitForSeconds(2);
-            }
-        } else {
-            yield return new WaitForSeconds(0);
-        }
-
-
     }
 
-    public void UpdatePlayerStats(int wave, PlayerController player)
+    public void UpdatePlayerStats(PlayerController player)
     {
         var variables = new Dictionary<string, float>
     {
-        { "wave", wave }
+        { "wave", GameManager.Instance.wave }
     };
 
         float newHP = RPNEvaluator.Evaluate("95 wave 5 * +", variables);
@@ -234,7 +188,7 @@ public class EnemySpawner : MonoBehaviour
         player.SetSpellPower((int)newSpellPower);
         player.SetMoveSpeed(newSpeed);
 
-        Debug.Log($"[Wave {wave}] Stats updated:");
+        Debug.Log($"[Wave {GameManager.Instance.wave}] Stats updated:");
         Debug.Log($"  HP: {(int)newHP}");
         Debug.Log($"  Max Mana: {(int)newMana}");
         Debug.Log($"  Mana Regen: {(int)newRegen}");
