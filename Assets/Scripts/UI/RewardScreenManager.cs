@@ -10,12 +10,13 @@ public class RewardScreenManager : MonoBehaviour
     TextMeshProUGUI damageDealt;
     [SerializeField]
     TextMeshProUGUI damageRecieved;
-
+    [SerializeField]
+    DamageTracker damageTracker;
     public GameObject rewardUI;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -27,8 +28,14 @@ public class RewardScreenManager : MonoBehaviour
 
             timeSpent.text = "Time Spent: " + Math.Round(GameManager.Instance.timeEnd - GameManager.Instance.timeStart, 2);
             damageDealt.text = "Damage Dealt: " + GameManager.Instance.damageDealt;
-            damageRecieved.text = "Damage Recieved: " + GameManager.Instance.damageReceived;
-        
+            if (damageTracker != null)
+            {
+                damageRecieved.text = "Damage Recieved: " + damageTracker.GetTotalDamageTaken();
+            }
+            else
+            {
+                damageRecieved.text = "Damage Recieved: N/A";
+            }
         }
         else
         {

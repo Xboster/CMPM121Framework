@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class SpellCaster 
+public class SpellCaster
 {
     public float mana;
     public int max_mana;
@@ -31,7 +31,7 @@ public class SpellCaster
     }
 
     public IEnumerator Cast(Vector3 where, Vector3 target)
-    {        
+    {
         if (mana >= spell.GetManaCost() && spell.IsReady())
         {
             mana -= spell.GetManaCost();
@@ -39,5 +39,7 @@ public class SpellCaster
         }
         yield break;
     }
+
+
 
 }

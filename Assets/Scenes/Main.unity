@@ -702,6 +702,7 @@ MonoBehaviour:
   timeSpent: {fileID: 62693520}
   damageDealt: {fileID: 1572071571}
   damageRecieved: {fileID: 570285128}
+  damageTracker: {fileID: 570285130}
   rewardUI: {fileID: 1709288111}
 --- !u!4 &220180078
 Transform:
@@ -2048,7 +2049,6 @@ MonoBehaviour:
   - {fileID: 2073311049}
   - {fileID: 1577913788}
   - {fileID: 587991943}
-  difficulty_level: 
   wave: 0
 --- !u!1 &532755679
 GameObject:
@@ -2272,6 +2272,7 @@ GameObject:
   - component: {fileID: 570285127}
   - component: {fileID: 570285129}
   - component: {fileID: 570285128}
+  - component: {fileID: 570285130}
   m_Layer: 5
   m_Name: DamageRecievedText
   m_TagString: Untagged
@@ -2295,7 +2296,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -37.400024, y: 177.4}
+  m_AnchoredPosition: {x: -37.400024, y: 177.39996}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &570285128
@@ -2397,6 +2398,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 570285126}
   m_CullTransparentMesh: 1
+--- !u!114 &570285130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570285126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06b97391a7ecd244498c8a1930a4d3c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  totalDamageTaken: 0
 --- !u!1 &578112679
 GameObject:
   m_ObjectHideFlags: 0
@@ -5275,7 +5289,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1669477601}
-  - component: {fileID: 1669477600}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -5283,20 +5296,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1669477600
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1669477599}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 938a155e32abb744bab8742e08c3a221, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  nextWaveButton: {fileID: 284566016}
-  rewardScreen: {fileID: 1709288111}
 --- !u!4 &1669477601
 Transform:
   m_ObjectHideFlags: 0
