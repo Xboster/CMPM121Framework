@@ -172,9 +172,9 @@ public class EnemySpawner : MonoBehaviour
     public void UpdatePlayerStats(PlayerController player)
     {
         var variables = new Dictionary<string, float>
-    {
-        { "wave", GameManager.Instance.wave }
-    };
+        {
+            { "wave", GameManager.Instance.wave }
+        };
 
         float newHP = RPNEvaluator.Evaluate("95 wave 5 * +", variables);
         float newMana = RPNEvaluator.Evaluate("90 wave 10 * +", variables);

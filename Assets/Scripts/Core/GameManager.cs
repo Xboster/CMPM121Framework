@@ -5,7 +5,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
-public class GameManager 
+public class GameManager
 {
     public enum GameState
     {
@@ -19,7 +19,9 @@ public class GameManager
 
     public int countdown;
     private static GameManager theInstance;
-    public static GameManager Instance {  get
+    public static GameManager Instance
+    {
+        get
         {
             if (theInstance == null)
                 theInstance = new GameManager();
@@ -28,7 +30,7 @@ public class GameManager
     }
 
     public GameObject player;
-    
+
     public ProjectileManager projectileManager;
     public SpellIconManager spellIconManager;
     public EnemySpriteManager enemySpriteManager;
@@ -44,15 +46,18 @@ public class GameManager
     public int wave = 0;
     public Dictionary<string, Enemy> enemy_types;
     public Dictionary<string, Level> level_types;
+    public Dictionary<string, Spell> spell_types;
+
     private List<GameObject> enemies;
     public int enemy_count { get { return enemies.Count; } }
 
-    public void ParseEnemyJSON(){
+    public void ParseEnemyJSON()
+    {
         enemy_types = new Dictionary<string, Enemy>();
         var enemytext = Resources.Load<TextAsset>("enemies");
 
         // var convert = JsonConvert.DeserializeObject<List<Enemy>>(enemytext.text);
-        
+
         JToken jo = JToken.Parse(enemytext.text);
         foreach (var enemy in jo)
         {
@@ -60,7 +65,8 @@ public class GameManager
             enemy_types[en.name] = en;
         }
     }
-    public void ParseLevelJSON(){
+    public void ParseLevelJSON()
+    {
         level_types = new Dictionary<string, Level>();
         var leveltext = Resources.Load<TextAsset>("levels");
         JToken jo = JToken.Parse(leveltext.text);
@@ -68,6 +74,18 @@ public class GameManager
         {
             Level le = level.ToObject<Level>();
             level_types[le.name] = le;
+        }
+    }
+    public void ParseSpellJSON()
+    {
+        spell_types = new Dictionary<string, Spell>();
+        var spelltext = Resources.Load<TextAsset>("spells");
+        JObject jo = JObject.Parse(spelltext.text);
+
+        foreach (var pair in jo)
+        {
+            Spell sp = pair.Value.ToObject<Spell>();
+            spell_types[pair.Key] = sp;
         }
     }
 
@@ -84,7 +102,7 @@ public class GameManager
     {
         if (enemies == null || enemies.Count == 0) return null;
         if (enemies.Count == 1) return enemies[0];
-        return enemies.Aggregate((a,b) => (a.transform.position - point).sqrMagnitude < (b.transform.position - point).sqrMagnitude ? a : b);
+        return enemies.Aggregate((a, b) => (a.transform.position - point).sqrMagnitude < (b.transform.position - point).sqrMagnitude ? a : b);
     }
 
     private GameManager()
@@ -92,5 +110,6 @@ public class GameManager
         enemies = new List<GameObject>();
         ParseEnemyJSON();
         ParseLevelJSON();
+        ParseSpellJSON();
     }
 }

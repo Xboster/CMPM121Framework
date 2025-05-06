@@ -3,8 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
-public class Spell 
+public class Spell
 {
+    public string name;
+    public string description;
+    public int icon;
+    public Dictionary<string, string> damage;
+    public string mana_cost;
+    public string cooldown;
+    public Dictionary<string, string> projectile;
     public float last_cast;
     public SpellCaster owner;
     public Hittable.Team team;
@@ -16,27 +23,31 @@ public class Spell
 
     public string GetName()
     {
-        return "Bolt";
+        return name;
     }
 
     public int GetManaCost()
     {
-        return 10;
+        return int.Parse(mana_cost);
     }
 
     public int GetDamage()
     {
-        return 100;
+        var variables = new Dictionary<string, float>
+        {
+            { "power", owner.spell_power }
+        };
+        return (int)RPNEvaluator.Evaluate(damage["amount"], variables);
     }
 
     public float GetCooldown()
     {
-        return 0.75f;
+        return float.Parse(cooldown);
     }
 
     public virtual int GetIcon()
     {
-        return 0;
+        return icon;
     }
 
     public bool IsReady()
