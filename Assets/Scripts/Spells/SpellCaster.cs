@@ -29,7 +29,7 @@ public class SpellCaster
         this.mana_reg = mana_reg;
         this.team = team;
         // starting spell is Arcane Bolt
-        spell = new SpellBuilder().Build(this, (JObject)GameManager.Instance.spells["arcane_bolt"]);
+        spell = new SpellBuilder().Build(this, (JObject)GameManager.Instance.spells["arcane_spray"]);
     }
 
     public IEnumerator Cast(Vector3 where, Vector3 target)

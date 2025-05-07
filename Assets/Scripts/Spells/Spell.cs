@@ -2,13 +2,17 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using Mono.Cecil.Cil;
+using UnityEngine.Rendering;
 
 public class Spell
 {
     public string name;
     public string description;
     public int icon;
-    public Dictionary<string, string> damage;
+    float spray;
+    int shots;
+    public Damage damage;
     public int mana_cost;
     public string cooldown;
     public Dictionary<string, string> projectile;
@@ -20,17 +24,34 @@ public class Spell
     public Spell(SpellCaster owner)
     {
         this.owner = owner;
+        damage = new Damage(0, Damage.Type.PHYSICAL); // Initialize the damage field with default values
     }
 
     public void SetProperties(JObject attributes)
     {
-        name = attributes["name"].ToString();
-        description = attributes["description"].ToString();
-        icon = attributes["icon"].ToObject<int>();
-        damage = attributes["damage"].ToObject<Dictionary<string, string>>();
-        mana_cost = attributes["mana_cost"].ToObject<int>();
-        cooldown = attributes["cooldown"].ToString();
-        projectile = attributes["projectile"].ToObject<Dictionary<string, string>>();
+        if (attributes["name"] != null)
+            name = attributes["name"].ToString();
+        if (attributes["description"] != null)
+            description = attributes["description"].ToString();
+        if (attributes["icon"] != null)
+            icon = attributes["icon"].ToObject<int>();
+        if (attributes["spray"] != null)
+            spray = attributes["spray"].ToObject<float>();
+        if (attributes["N"] != null)
+            shots = (int)RPNEvaluator.Evaluate(attributes["N"].ToString(), new Dictionary<string, float> { { "power", owner.spell_power } });
+        if (attributes["damage"] != null)
+        {
+            if (attributes["damage"]["type"] != null)
+                damage.type = (Damage.Type)System.Enum.Parse(typeof(Damage.Type), attributes["damage"]["type"].ToString(), true);
+            if (attributes["damage"]["amount"] != null)
+                damage.amount = (int)RPNEvaluator.Evaluate(attributes["damage"]["amount"].ToString(), new Dictionary<string, float> { { "power", owner.spell_power } });
+        }
+        if (attributes["mana_cost"] != null)
+            mana_cost = attributes["mana_cost"].ToObject<int>();
+        if (attributes["cooldown"] != null)
+            cooldown = attributes["cooldown"].ToString();
+        if (attributes["projectile"] != null)
+            projectile = attributes["projectile"].ToObject<Dictionary<string, string>>();
     }
 
     public string GetName()
@@ -45,11 +66,7 @@ public class Spell
 
     public int GetDamage()
     {
-        var variables = new Dictionary<string, float>
-        {
-            { "power", owner.spell_power }
-        };
-        return (int)RPNEvaluator.Evaluate(damage["amount"], variables);
+        return damage.amount;
     }
 
     public float GetCooldown()
@@ -70,7 +87,36 @@ public class Spell
     public virtual IEnumerator Cast(Vector3 where, Vector3 target, Hittable.Team team)
     {
         this.team = team;
-        GameManager.Instance.projectileManager.CreateProjectile(0, "straight", where, target - where, 15f, OnHit);
+
+        var variables = new Dictionary<string, float>
+        {
+            { "power", owner.spell_power }
+        };
+
+        Debug.Log("Power: " + owner.spell_power);
+        int speed = (int)RPNEvaluator.Evaluate(projectile["speed"].ToString(), variables);
+
+        if (projectile.ContainsKey("lifetime"))
+        {
+            float lifetime = (float)RPNEvaluator.Evaluate(projectile["lifetime"].ToString(), variables);
+
+            for (int i = 0; i < shots; i++)
+            {
+                Vector3 direction = target - where;
+                if (spray > 0)
+                {
+                    Debug.Log("Spray: " + spray);
+                    float angle = Mathf.Atan2(direction.y, direction.x);
+                    angle += Random.value * spray - spray / 2;
+                    direction = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), direction.z);
+                }
+                GameManager.Instance.projectileManager.CreateProjectile(int.Parse(projectile["sprite"]), projectile["trajectory"], where, direction.normalized, speed, OnHit, lifetime);
+            }
+        }
+        else
+        {
+            GameManager.Instance.projectileManager.CreateProjectile(int.Parse(projectile["sprite"]), projectile["trajectory"], where, target - where, speed, OnHit);
+        }
         yield return new WaitForEndOfFrame();
     }
 
@@ -78,7 +124,7 @@ public class Spell
     {
         if (other.team != team)
         {
-            other.Damage(new Damage(GetDamage(), Damage.Type.ARCANE));
+            other.Damage(new Damage(GetDamage(), damage.type));
         }
 
     }
