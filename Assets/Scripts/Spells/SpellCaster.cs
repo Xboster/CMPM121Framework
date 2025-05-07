@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 public class SpellCaster
 {
     public float mana;
@@ -27,7 +28,8 @@ public class SpellCaster
         this.max_mana = mana;
         this.mana_reg = mana_reg;
         this.team = team;
-        spell = new SpellBuilder().Build(this);
+        // starting spell is Arcane Bolt
+        spell = new SpellBuilder().Build(this, (JObject)GameManager.Instance.spells["arcane_bolt"]);
     }
 
     public IEnumerator Cast(Vector3 where, Vector3 target)

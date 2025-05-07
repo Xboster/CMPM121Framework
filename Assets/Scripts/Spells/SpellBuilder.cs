@@ -7,21 +7,16 @@ using System.Collections.Generic;
 
 public class SpellBuilder
 {
-
-    public Spell Build(JObject attributes, SpellCaster owner)
+    public Spell Build(SpellCaster owner, JToken attributes)
     {
         Spell spell = new Spell(owner);
-
-        // TODO
-
-
+        spell.SetProperties((JObject)attributes);
 
         return spell;
-
     }
 
 
-    public SpellBuilder(JObject attributes)
+    public SpellBuilder()
     {
     }
 
