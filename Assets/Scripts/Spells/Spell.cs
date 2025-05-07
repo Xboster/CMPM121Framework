@@ -9,16 +9,28 @@ public class Spell
     public string description;
     public int icon;
     public Dictionary<string, string> damage;
-    public string mana_cost;
+    public int mana_cost;
     public string cooldown;
     public Dictionary<string, string> projectile;
     public float last_cast;
+
     public SpellCaster owner;
     public Hittable.Team team;
 
     public Spell(SpellCaster owner)
     {
         this.owner = owner;
+    }
+
+    public void SetProperties(JObject attributes)
+    {
+        name = attributes["name"].ToString();
+        description = attributes["description"].ToString();
+        icon = attributes["icon"].ToObject<int>();
+        damage = attributes["damage"].ToObject<Dictionary<string, string>>();
+        mana_cost = attributes["mana_cost"].ToObject<int>();
+        cooldown = attributes["cooldown"].ToString();
+        projectile = attributes["projectile"].ToObject<Dictionary<string, string>>();
     }
 
     public string GetName()
@@ -28,7 +40,7 @@ public class Spell
 
     public int GetManaCost()
     {
-        return int.Parse(mana_cost);
+        return mana_cost;
     }
 
     public int GetDamage()

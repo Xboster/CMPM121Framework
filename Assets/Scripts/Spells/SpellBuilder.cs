@@ -5,17 +5,24 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 
 
-public class SpellBuilder 
+public class SpellBuilder
 {
 
-    public Spell Build(SpellCaster owner)
+    public Spell Build(JObject attributes, SpellCaster owner)
     {
-        return new Spell(owner);
+        Spell spell = new Spell(owner);
+
+        // TODO
+
+
+
+        return spell;
+
     }
 
-   
-    public SpellBuilder()
-    {        
+
+    public SpellBuilder(JObject attributes)
+    {
     }
 
 }
