@@ -46,7 +46,8 @@ public class GameManager
     public int wave = 0;
     public Dictionary<string, Enemy> enemy_types;
     public Dictionary<string, Level> level_types;
-    public Dictionary<string, Spell> spell_types;
+    public JObject spells;
+
 
     private List<GameObject> enemies;
     public int enemy_count { get { return enemies.Count; } }
@@ -78,14 +79,12 @@ public class GameManager
     }
     public void ParseSpellJSON()
     {
-        spell_types = new Dictionary<string, Spell>();
+        spells = new JObject();
         var spelltext = Resources.Load<TextAsset>("spells");
-        JObject jo = JObject.Parse(spelltext.text);
-
-        foreach (var pair in jo)
+        JObject spell_attributes = JObject.Parse(spelltext.text);
+        foreach (var a in spell_attributes)
         {
-            Spell sp = pair.Value.ToObject<Spell>();
-            spell_types[pair.Key] = sp;
+            spells.Add(a.Key, a.Value);
         }
     }
 
