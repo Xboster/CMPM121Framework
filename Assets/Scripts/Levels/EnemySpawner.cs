@@ -187,6 +187,8 @@ public class EnemySpawner : MonoBehaviour
         player.SetManaRegen(newRegen);
         player.SetSpellPower((int)newSpellPower);
         player.SetMoveSpeed(newSpeed);
+        // player.spellcaster.spell.SetProperties();
+
 
         Debug.Log($"[Wave {GameManager.Instance.wave}] Stats updated:");
         Debug.Log($"  HP: {(int)newHP}");
