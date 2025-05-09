@@ -30,16 +30,13 @@ public class SpellCaster
         spell = new SpellBuilder().Build(this);
     }
 
-    public IEnumerator Cast(Vector3 where, Vector3 target)
+    public IEnumerator Cast(Vector3 origin, Vector3 target)
     {
         if (mana >= spell.GetManaCost() && spell.IsReady())
         {
             mana -= spell.GetManaCost();
-            yield return spell.Cast(where, target, team);
+            yield return spell.Cast(origin, target, team);
         }
         yield break;
     }
-
-
-
 }

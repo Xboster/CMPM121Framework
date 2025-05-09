@@ -24,6 +24,14 @@ public class RewardScreenManager : MonoBehaviour
     {
         if (GameManager.Instance.state == GameManager.GameState.WAVEEND)
         {
+            SpellCaster caster = GameManager.Instance.player.GetComponent<SpellCaster>();
+            Spell rewardSpell = new SpellBuilder().Build(caster);
+            // Find the SpellRewardUI
+            SpellRewardUI rewardSlot = rewardUI.GetComponentInChildren<SpellRewardUI>();
+            if (rewardSlot != null) {
+                rewardSlot.Setup(rewardSpell);
+            }
+                    
             rewardUI.SetActive(true);
 
             timeSpent.text = "Time Spent: " + Math.Round(GameManager.Instance.timeEnd - GameManager.Instance.timeStart, 2);
